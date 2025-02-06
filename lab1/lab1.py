@@ -79,16 +79,16 @@ def main():
     print("----------------------")
 
     print("CMP: ")
-    print("Случайно: ", all_cmp[processors])
-    print("По возрастанию: ", all_cmp_asc[processors])
-    print("По убыванию: ", all_cmp_desc[processors])
+    print("Случайно: ", all_cmp[len(all_cmp)-1])
+    print("По возрастанию: ", all_cmp_asc[len(all_cmp_asc)-1])
+    print("По убыванию: ", all_cmp_desc[len(all_cmp_desc)-1])
 
     print("----------------------")
 
     print("HDMT")
-    print("Случайно: ", all_hdmt[processors])
-    print("По возрастанию: ", all_hdmt_asc[processors])
-    print("По убыванию: ", all_hdmt_desc[processors])
+    print("Случайно: ", all_hdmt[len(all_hdmt)-1])
+    print("По возрастанию: ", all_hdmt_asc[len(all_hdmt_asc)-1])
+    print("По убыванию: ", all_hdmt_desc[len(all_hdmt_desc)-1])
         
 
 if __name__ == "__main__":
