@@ -34,9 +34,9 @@ def hdmt_schedule(tasks, processors):
 
 # Основная программа
 def main():
-    processors = 4  # количество процессоров
-    num_tasks = 10  # количество заданий
-    num_massives = 5 # количество списков тасков
+    processors = int(input("N: ")) # количество процессоров
+    num_tasks = int(input("M: "))  # количество заданий
+    num_massives = int(input("Кол-во массивов: ")) # количество списков тасков
 
     all_cmp = []
     all_cmp_asc = []
@@ -76,18 +76,19 @@ def main():
         aver = sum(i)/len(i)
         i.append(aver)
         
-            
+    print("----------------------")
+
     print("CMP: ")
-    print("Случайно: ", all_cmp[processors+1])
-    print("По возрастанию: ", all_cmp_asc[processors+1])
-    print("По убыванию: ", all_cmp_desc[processors+1])
+    print("Случайно: ", all_cmp[processors])
+    print("По возрастанию: ", all_cmp_asc[processors])
+    print("По убыванию: ", all_cmp_desc[processors])
 
     print("----------------------")
 
     print("HDMT")
-    print("Случайно: ", all_hdmt[processors+1])
-    print("По возрастанию: ", all_hdmt_asc[processors+1])
-    print("По убыванию: ", all_hdmt_desc[processors+1])
+    print("Случайно: ", all_hdmt[processors])
+    print("По возрастанию: ", all_hdmt_asc[processors])
+    print("По убыванию: ", all_hdmt_desc[processors])
         
 
 if __name__ == "__main__":
