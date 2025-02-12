@@ -68,17 +68,17 @@ def main():
         result_cmp_asc = cmp_schedule(tasks_asc, processors)
         result_cmp_desc = cmp_schedule(task_desc, processors)
 
-        result_hdmt = hdmt_schedule(tasks, processors)
+        '''result_hdmt = hdmt_schedule(tasks, processors)
         result_hdmt_asc = hdmt_schedule(tasks_asc, processors)
-        result_hdmt_desc = hdmt_schedule(task_desc, processors)
+        result_hdmt_desc = hdmt_schedule(task_desc, processors)'''
 
         all_cmp.append(max(result_cmp))
         all_cmp_asc.append(max(result_cmp_asc))
         all_cmp_desc.append(max(result_cmp_desc))
 
-        all_hdmt.append(max(result_hdmt))
+        '''all_hdmt.append(max(result_hdmt))
         all_hdmt_asc.append(max(result_hdmt_asc))
-        all_hdmt_desc.append(max(result_hdmt_desc))
+        all_hdmt_desc.append(max(result_hdmt_desc))'''
 
         max_val_cmp = min([max(result_cmp), max(result_cmp_asc), max(result_cmp_desc)])
 
@@ -86,20 +86,20 @@ def main():
             cmp_desc += 1 
         elif max_val_cmp == max(result_cmp):
             cmp_rand += 1
+            print(tasks, max(result_cmp))
+            print(task_desc, max(result_cmp_desc))
         elif max_val_cmp == max(result_cmp_asc):
             cmp_asc += 1
-           
-            '''print(tasks_asc, result_cmp_asc)
-            print(task_desc, result_cmp_desc)  '''  
+               
 
-        max_val_hdmt = min([max(result_hdmt), max(result_hdmt_asc), max(result_hdmt_desc)])
+        '''max_val_hdmt = min([max(result_hdmt), max(result_hdmt_asc), max(result_hdmt_desc)])
 
         if max_val_hdmt == max(result_hdmt_desc):
             hdmt_desc += 1
         elif max_val_hdmt ==  max(result_hdmt):
             hdmt_rand += 1
         elif max_val_hdmt == max(result_hdmt_asc):
-            hdmt_asc += 1
+            hdmt_asc += 1'''
 
 
         
@@ -108,9 +108,9 @@ def main():
         i.append(aver)
 
 
-    for i in [all_hdmt, all_hdmt_asc, all_hdmt_desc]:
+    '''for i in [all_hdmt, all_hdmt_asc, all_hdmt_desc]:
         aver = sum(i)/len(i)
-        i.append(aver)
+        i.append(aver)'''
         
     print("-------Lab 1----------")
 
@@ -119,12 +119,12 @@ def main():
     print("По возрастанию: ", all_cmp_asc[len(all_cmp_asc)-1], cmp_asc)
     print("По убыванию: ", all_cmp_desc[len(all_cmp_desc)-1], cmp_desc)
 
-    print("----------------------")
+    '''print("----------------------")
 
     print("HDMT")
     print("Случайно: ", all_hdmt[len(all_hdmt)-1], hdmt_rand)
     print("По возрастанию: ", all_hdmt_asc[len(all_hdmt_asc)-1], hdmt_asc)
-    print("По убыванию: ", all_hdmt_desc[len(all_hdmt_desc)-1], hdmt_desc)
+    print("По убыванию: ", all_hdmt_desc[len(all_hdmt_desc)-1], hdmt_desc)'''
         
 
 if __name__ == "__main__":
