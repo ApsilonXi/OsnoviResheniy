@@ -76,7 +76,7 @@ def main():
         aver = sum(i)/len(i)
         i.append(aver)
         
-    print("----------------------")
+    print("-------Lab 1----------")
 
     print("CMP: ")
     print("Случайно: ", all_cmp[len(all_cmp)-1])
