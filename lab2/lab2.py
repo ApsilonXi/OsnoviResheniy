@@ -69,7 +69,7 @@ def main():
         aver = sum(i)/len(i)
         i.append(aver)
         
-    print("-------Lab 1----------")
+    print("-------Lab 2----------")
 
     print("Случайно: ", all_schedule[len(all_schedule)-1], schedule_rand) 
     print("По возрастанию: ", all_schedule_asc[len(all_schedule_asc)-1], schedule_asc)
