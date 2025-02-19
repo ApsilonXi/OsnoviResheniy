@@ -11,6 +11,7 @@ def schedule_with_arbitrary_load(T, N, M):
         elif load[min_index] > 0:
             load_min_index = load.index(min(load))
             load[load_min_index] += i[load_min_index]
+        print(load)
     return load, max(load)
 
 def sorting(N, T, sort_arg = -1):
@@ -28,7 +29,7 @@ def main():
     rand_min = int(input("Min: "))
     rand_max = int(input("Max: "))
     '''num_massives = int(input("Кол-во массивов: ")) # количество списков тасков'''
-    num_massives = 100
+    num_massives = 10
 
     all_schedule = []
     all_schedule_asc = []
@@ -40,8 +41,10 @@ def main():
     
     for i in range(num_massives):
         tasks = np.random.randint(rand_min, rand_max, (num_tasks, processors)).tolist()
-        tasks_asc = sorting(processors-1, tasks, 0)
-        tasks_desc = sorting(processors-1, tasks, 1)
+        for i in tasks:
+            i.append(sum(i))
+        tasks_asc = sorting(processors, tasks, 0)
+        tasks_desc = sorting(processors, tasks, 1)
 
         result_schedule, max_rand = schedule_with_arbitrary_load(tasks, processors, num_tasks)
         result_schedule_asc, max_asc = schedule_with_arbitrary_load(tasks_asc, processors, num_tasks)
@@ -57,6 +60,8 @@ def main():
             schedule_desc += 1 
         elif max_val_schedule == max_rand:
             schedule_rand += 1
+            print(tasks, result_schedule, max_rand)
+            print(tasks_desc, result_schedule_desc, max_desc)
         elif max_val_schedule == max_asc:
             schedule_asc += 1
         
