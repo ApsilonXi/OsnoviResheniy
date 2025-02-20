@@ -1,106 +1,98 @@
-import numpy as np
+import random
+import math
 
-def calculate_barriers(matrix):
-    """Рассчитываем барьеры для каждой строки."""
-    min_barrier = []
-    max_barrier = []
+def init_processor_loads(num_processors):
+    return [0] * num_processors
 
-    for row in matrix:
-        min_val = min(row)  # Нахождение минимального значения в строке
-        max_val = max(row)  # Нахождение максимального значения в строке
-        min_barrier.append((min_val // len(row)) + 1)  # Округляем вверх
-        max_barrier.append((max_val // len(row)) + 1)  # Округляем вверх
+# Распределение нагрузки
+def distribute_task_to_processor(processor_loads, task):
+    min_load_index = processor_loads.index(min(processor_loads))
+    processor_loads[min_load_index] += task
+    return min_load_index + 1  
 
-    return min_barrier, max_barrier
-
-def minimal_elements_selection(matrix):
-    """Выбор минимальных элементов из каждой строки."""
-    selected_elements = []
-
-    for row in matrix:
-        selected_elements.append(min(row))  # Нахождение минимального значения в строке
-
-    return selected_elements
-
-def apply_barriers(matrix, min_barrier, max_barrier):
-    """Применение барьеров к матрице."""
-    result = []
-
+# Алгоритм минимальных элементов
+def schedule_min_elements(matrix, barrier):
+    processor_loads = init_processor_loads(N)  
+    #print(f"\nПрименение алгоритма минимальных элементов до барьера {barrier}:")
     for i, row in enumerate(matrix):
-        new_row = []
-        for value in row:
-            if value < min_barrier[i]:
-                new_row.append(min_barrier[i])  # Применяем нижний барьер
-            elif value > max_barrier[i]:
-                new_row.append(max_barrier[i])  # Применяем верхний барьер
-            else:
-                new_row.append(value)  # Значение в пределах барьеров
-        result.append(new_row)
+        min_element = min(row)
+        proc_id = distribute_task_to_processor(processor_loads, min_element)
+        #print(f"Задача {i+1}, минимальный элемент: {min_element} назначен на процессор {proc_id}")
+        
+        #print(processor_loads)
+        
+        if min_element >= barrier:
+            #print(f"Барьер {barrier} достигнут на задаче {i+1}, переходим на алгоритм Плотникова-Зверева.")
+            schedule_plotnikov_zverev(matrix[i:], processor_loads) 
+            break
+    return processor_loads, max(processor_loads)
 
-    return result
-
-def plotnikov_zverev_algorithm(matrix):
-    """Применение алгоритма Плотникова-Зверева."""
-    num_rows = len(matrix)
-    selected_rows = [False] * num_rows  # Список для отслеживания выбранных строк
-    assigned_resources = [0] * num_rows   # Список для отслеживания распределенных ресурсов
-
-    for step in range(num_rows):
-        # Находим минимальные элементы, которые еще не были выбраны
-        remaining_elements = [row for index, row in enumerate(matrix) if not selected_rows[index]]
-        if not remaining_elements:
-            break  # Если все строки выбраны, выходим из цикла
-
-        # Выбор минимального элемента из оставшихся строк
-        min_element = float('inf')
-        min_row_index = -1
-
-        for i, row in enumerate(remaining_elements):
-            current_min = min(row)
-            if current_min < min_element:
-                min_element = current_min
-                min_row_index = i + sum(selected_rows[:i])  # Коррекция индекса
-
-        if min_row_index != -1:
-            selected_rows[min_row_index] = True  # Отмечаем строку как выбранную
-            assigned_resources[min_row_index] += min_element  # Распределяем ресурсы
-
-    return assigned_resources
+def schedule_plotnikov_zverev(matrix, processor_loads):
+    for i, row in enumerate(matrix):
+        max_element = max(row)
+        proc_id = distribute_task_to_processor(processor_loads, max_element)
+        #print(processor_loads)
 
 def main():
-    num_tasks = int(input("M: "))  # количество заданий
-    processors = int(input("N: ")) # количество процессоров
-    rand_min = int(input("Min: "))
-    rand_max = int(input("Max: "))
-    '''num_massives = int(input("Кол-во массивов: ")) # количество списков тасков'''
-    num_massives = 10
-
-    all_schedule = []
-    all_schedule_asc = []
-    all_schedule_desc = []
-
-    schedule_rand = 0
-    schedule_asc = 0
-    schedule_desc = 0
-    
     for i in range(num_massives):
-        tasks = np.random.randint(rand_min, rand_max, (num_tasks, processors)).tolist()
-        for i in tasks:
-            i.append(sum(i))
-        tasks_asc = sorted(tasks)
-        task_desc = sorted(tasks, reverse=True)
+        #Генерация случайного массива
+        matrix = [[random.randint(min_val, max_val) for _ in range(N)] for _ in range(M)]
 
-        min_barrier, max_barrier = calculate_barriers(tasks)
-        print("Минимальные барьеры:", min_barrier)
-        print("Максимальные барьеры:", max_barrier)
-            
-        modified_matrix = apply_barriers(tasks, min_barrier, max_barrier)
-        print("Матрица после применения барьеров:")
-        print(modified_matrix)
+        random_sorted_matrix = matrix
+        asc_sorted_matrix = sorted(matrix, key=sum)
+        desc_sorted_matrix = sorted(matrix, key=sum, reverse=True)
 
-        result = plotnikov_zverev_algorithm(modified_matrix)
-        print("Результат алгоритма Плотникова-Зверева:")
-        print(result)
+        all_rand = []
+        all_asc = []
+        all_desc = []
 
-if __name__ == "__main__":
-    main()
+        rand_win = 0
+        asc_win = 0
+        desc_win = 0
+
+        # Минимальные значения строк
+        min_values = [min(row) for row in matrix]
+        min_barrier = math.ceil(sum(min_values) / N)
+
+        # Максимальные значения строк
+        max_values = [max(row) for row in matrix]
+        max_barrier = math.ceil(sum(max_values) / N)
+
+        #print("\nМинимальный барьер:", min_barrier)
+        #print("Максимальный барьер:", max_barrier)
+
+        rand_loads, max_rand = schedule_min_elements(random_sorted_matrix, max_barrier)
+        asc_loads, max_asc = schedule_min_elements(asc_sorted_matrix, max_barrier)
+        desc_loads, max_desc = schedule_min_elements(desc_sorted_matrix, max_barrier)
+
+        all_rand.append(max_rand)
+        all_asc.append(max_asc)
+        all_desc.append(max_desc)
+
+        max_val_res = min([max(rand_loads), max(asc_loads), max(desc_loads)])
+
+        if max_val_res == max(rand_loads):
+            rand_win += 1
+        elif max_val_res == max(asc_loads):
+            asc_win += 1
+            '''print(tasks, max(result_cmp))
+            print(task_desc, max(result_cmp_desc))'''
+        elif max_val_res == max(desc_loads):
+            desc_win += 1 
+
+    for i in [all_rand, all_asc, all_desc]:
+        aver = sum(i)/len(i)
+        i.append(aver)
+
+    print("---------Lab 3---------")
+    print("Случайно: ", all_rand[len(all_rand)-1], max_rand) 
+    print("По возрастанию: ", all_asc[len(all_asc)-1], max_asc)
+    print("По убыванию: ", all_desc[len(all_desc)-1], max_desc)
+
+M = int(input("M: "))
+N = int(input("N: "))
+min_val = int(input("Min: "))
+max_val = int(input("Max: "))
+num_massives = 100
+
+main()
