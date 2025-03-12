@@ -29,7 +29,7 @@ def main():
     rand_min = int(input("Min: "))
     rand_max = int(input("Max: "))
     '''num_massives = int(input("Кол-во массивов: ")) # количество списков тасков'''
-    num_massives = 10
+    num_massives = 100
 
     all_schedule = []
     all_schedule_asc = []
