@@ -1,160 +1,101 @@
-import numpy as np
-from random import randint, randrange
-import sys
-sys.stdout.reconfigure(encoding='utf-8')
+import random
 
-def divide_into_intervals(number, N): #принимает конечное число интервала и количество необходимых интервалов, возвращает список кортежей интервалов
-    interval_size = number // N
-    intervals = []
-    start = 1
-    for i in range(N):
-        end = start + interval_size - 1
-        intervals.append((start, end))
-        start = end + 1 if i < (N-1) else end
-    intervals[-1] = (intervals[-1][0], 255)
-    return intervals
+def cmp_schedule(tasks, processors):
+    load = [[] for _ in range(processors)]
+    load_sums = [0] * processors
 
-def invert_nth_bit(num, n): #инвертация бита, принимает число и номер бита, возвращает число с измененным битом
-    binary_num = '{:08b}'.format(num)
-    inverted_bit = '0' if binary_num[n] == '1' else '1'
-    new_binary_num = binary_num[:n] + inverted_bit + binary_num[n+1:]
-    inverted_int = int(new_binary_num, 2)
-    return inverted_int
+    for task in tasks:
+        for i in range(processors):
+            load_sums[i] = sum(load[i])
+        min_index = load_sums.index(min(load_sums))
+        load[min_index].append(task)
+    return load
 
-def calculate_adaptation(DNA):
-    global T, INTERVALS
-    matrix = [[] for _ in range(N)]
-    for i in range(len(DNA)):
-        for i_nter in range(len(INTERVALS)):
-            if DNA[i] in range(*(INTERVALS[i_nter])): #если число принадлежит интервалу
-                matrix[i_nter].append(T[i]) #добавить в столбец(строку) соответствующей номеру данного интервала
-    print("=====================================")
-    for i in matrix: print(i)
-    print("=====================================")
-    sums = [sum(row) for row in matrix]
-    #print(sums, max(sums))
-    return max(sums) #вернуть приспособляемость
+def pashkeev_back(n, tasks, load, processors):
+    for i in range(len(tasks)):
+        if n > -1:
+            load[n].append(tasks[i]) 
+            n -= 1
+        if n == -1:
+            return pashkeev_forward(0, tasks[i+1:], load, processors)
+    return load
 
-def MUTATE(DNAp):
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print(DNAp)
-    print(calculate_adaptation(DNAp))
-    elemind = randint(0, len(DNAp)-1)
-    #if DNAp[elemind] == infinity -> exit
-    #еще раз прокинуть мутацию пока не пройдет через все процессоры?
-    p = randint(0, 7)
-    mutated = invert_nth_bit(DNAp[elemind], p)
-    print(f"инвертирован {p}-й бит, мутация осуществлена: {DNAp[elemind]} -> {mutated}")
-    DNAp[elemind] = mutated
-    print(DNAp)
-    print(calculate_adaptation(DNAp))
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    return DNAp
+def pashkeev_forward(n, tasks, load, processors): 
+    for i in range(len(tasks)):
+        if n < processors:
+            load[n].append(tasks[i]) 
+            n += 1
+        if n == processors:
+            return pashkeev_back(n-1, tasks[i+1:], load, processors)  
+    return load
 
-def CROSSOVER(p1, p2, split):
-    global PM
-    DNAp = p1[0:split] + p2[split:]
-    r = randrange(100)
-    if r < PM and PM != 100:
-        print(f"вероятность оператора мутации = {r} {PM}, мутация не произошла")
-        return DNAp
-    else:
-        print(f"вероятность оператора мутации = {r} {PM}, осуществление процесса мутации...")
-        DNAp = MUTATE(DNAp)
-        return DNAp
+def cron(matrix):
+    while True:
+        summ = [sum(row) for row in matrix]
+        max_index = summ.index(max(summ))
+        min_index = summ.index(min(summ))
+        delta = max(summ) - min(summ)
 
-M, N, t1, t2, Z, K = int(input("M = ")), int(input("N = ")), int(input("t1 = ")), int(input("t2 = ")), int(input("Z (колво повторов) = ")), int(input("K (колво особей в поколении) = "))
-PM = int(input("PM = "))
-PK = int(input("PK = "))
-T = np.array([randint(t1, t2) for j in range(M)])
-print(T)
+        swapped = False
 
-'''M, N, K, Z = 5, 3, 3, 3
-T = np.array([11, 16, 12, 20, 13])
-print(T)'''
+        for elem in matrix[max_index]:
+            if elem < delta:
+                matrix[max_index].remove(elem)
+                matrix[min_index].append(elem)
+                swapped = True
+                break
 
-INTERVALS = divide_into_intervals(255, N) #получаем список интервалов вида [(0, n), (n+1, m), ... (x, N)]
-print(INTERVALS)
-
-
-gen = []
-for i in range(N):
-    DNA = []
-    for i in T: DNA.append(randint(0, 255))
-    gen.append((DNA, calculate_adaptation(DNA)))
-print(f"\nПЕРВОЕ ПОКОЛЕНИЕ: {gen}")
-
-GENERATIONS = {0 : gen}
-dictid = 0
-
-BEST = min([specie[1] for specie in gen])
-print("лучшая приспособляемость: ", BEST)
-
-COUNTER = 1
-
-while COUNTER != Z:
-    print("\n=====================================")
-    print(f"\nтекущее поколение: {gen}")
-    print(f"лучшая приспобляемость: {BEST}")
-    print(f"повторений: {COUNTER}")
-    print("\n=====================================\n")
-    nextgen = []
-    for i in range(len(gen)): #для номера особи из поколения
-        print("\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-        print(f"текущая особь: {gen[i]}, ({i})")
-        r = randrange(100)
-        if r < PK and PK != 100:
-            print(f"вероятность оператора кроссовера = {r} {PK}, особь переходит в следующее поколение")
-            nextgen.append(gen[i])
-            
-        else:
-            print(f"вероятность оператора кроссовера = {r} {PK}, выбор партнера...")
-            partner_id = i
-            while partner_id == i:
-                partner_id = randint(0, (len(gen)-1))
-            print(f"ВЫБРАН ПАРТНЕР: {gen[partner_id]}, ({partner_id})")
-            
-            split = randint(0, len(T)-1)
-            print(f"разбитие по {split}...")
-
-            Pdna1 = CROSSOVER(gen[i][0], gen[partner_id][0], split)
-            print(f"ПОЛУЧЕН ПОТОМОК {Pdna1}")
-            Pdna2 = CROSSOVER(gen[partner_id][0], gen[i][0], split)
-            print(f"ПОЛУЧЕН ПОТОМОК {Pdna2}")
-            P1 = (Pdna1, calculate_adaptation(Pdna1))
-            P2 = (Pdna2, calculate_adaptation(Pdna2))
-
-            contest = [gen[i][1], P1[1], P2[1]]
-            win = min(contest)
-            win_id = contest.index(win)
-            print(f"кандидаты в следующее поколение на {i} место: \n- базовый родитель: {gen[i]}\n- потомок1: {P1}\n- потомок2: {P2}")
-
-            if win_id == 0:
-                nextgen.append(gen[i])
-                print(f"в следующее поколение на {i} место отправляется базовый родитель {gen[i]}")
-            elif win_id == 1:
-                nextgen.append(P1)
-                print(f"в следующее поколение на {i} место отправляется потомок 1 {P1}")
-            elif win_id == 2:
-                nextgen.append(P2)
-                print(f"в следующее поколение на {i} место отправляется потомок 2 {P2}")
+        if not swapped:
+            for i in range(len(matrix[min_index])):
+                for j in range(len(matrix[max_index])):
+                    if matrix[max_index][j] > matrix[min_index][i] and matrix[max_index][j] - matrix[min_index][i] < delta:
+                        matrix[max_index][j], matrix[min_index][i] = matrix[min_index][i], matrix[max_index][j]
+                        swapped = True
+                        break
+                if swapped: break
+        if not swapped or delta in (0, 1): break
     
-    newBEST = min([specie[1] for specie in nextgen])
-    if newBEST == BEST:
-        COUNTER += 1
-    elif newBEST < BEST:
-        BEST = newBEST
-        COUNTER = 1
-    
-    dictid += 1
-    GENERATIONS[dictid] = nextgen
-    gen = nextgen
+    return summ
 
-print("\n=====================================")
-print(f"ЛУЧШАЯ ПРИСПОСОБЛЯЕМОСТЬ: {BEST}")
-print(f"КОЛИЧЕСТВО ПОВТОРОВ: {COUNTER}")
-print(f"КОЛИЧЕСТВО ПОЛУЧЕННЫХ ПОКОЛЕНИЙ: {len(list(GENERATIONS.keys()))}")
-for key in GENERATIONS:
-    print(key, GENERATIONS[key])
-print("=====================================\n")
+def main():
+    M = int(input("M: "))
+    N = int(input("N: "))
+    min_val = int(input("Min: "))
+    max_val = int(input("Max: "))
+    num_massives = 100
 
+    all_rand_cron, all_cmp_cron, all_pashkeev_cron = [], [], []
+
+    for i in range(num_massives):
+        matrix = [random.randint(min_val, max_val) for _ in range(M)]
+        desc_matrix = sorted(matrix, reverse=True)
+
+        desc_matrix_cron = [[] for _ in range(N)]
+        for i in matrix: 
+            desc_matrix_cron[random.randint(0, N - 1)].append(i)
+        for i in desc_matrix_cron: 
+            i.sort(reverse=True)
+
+        cmp_result = cmp_schedule(desc_matrix, N)
+        pashkeev_result = pashkeev_forward(0, desc_matrix, [[] for _ in range(N)], N)
+
+        cron_rand_result = cron(desc_matrix_cron)
+        cron_cmp_result = cron(cmp_result)
+        cron_pashkeev_result = cron(pashkeev_result)
+
+        all_rand_cron.append(max(cron_rand_result))
+        all_cmp_cron.append(max(cron_cmp_result))
+        all_pashkeev_cron.append(max(cron_pashkeev_result))
+
+
+    for i in [all_rand_cron, all_cmp_cron, all_pashkeev_cron]:
+        aver = sum(i)/len(i)
+        i.append(aver)
+
+    print("---------------Lab 4---------------")
+    print('Случайный: ', all_rand_cron[-1])
+    print('CMP: ', all_cmp_cron[-1])
+    print('Пашкеева: ', all_pashkeev_cron[-1])
+
+
+main()
