@@ -54,7 +54,6 @@ def cron(matrix):
                         break
                 if swapped: break
         if not swapped or delta in (0, 1): break
-    
     return summ
 
 def main():
@@ -96,6 +95,5 @@ def main():
     print('Случайный: ', all_rand_cron[-1])
     print('CMP: ', all_cmp_cron[-1])
     print('Пашкеева: ', all_pashkeev_cron[-1])
-
 
 main()
