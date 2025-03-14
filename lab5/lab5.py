@@ -2,12 +2,9 @@ import random
 
 def cmp_schedule(tasks, processors):
     load = [[] for _ in range(processors)]
-    load_sums = [0] * processors
 
     for task in tasks:
-        for i in range(processors):
-            load_sums[i] = sum(load[i])
-        min_index = load_sums.index(min(load_sums))
+        min_index = load.index(min(load))
         load[min_index].append(task)
     return load
 
@@ -64,6 +61,7 @@ def main():
     num_massives = 100
 
     all_rand_cron, all_cmp_cron, all_pashkeev_cron = [], [], []
+    rand_win, cmp_win, pashkeev_win = 0, 0, 0
 
     for i in range(num_massives):
         matrix = [random.randint(min_val, max_val) for _ in range(M)]
@@ -86,14 +84,24 @@ def main():
         all_cmp_cron.append(max(cron_cmp_result))
         all_pashkeev_cron.append(max(cron_pashkeev_result))
 
+        max_val_res = min([max(cron_rand_result), max(cron_cmp_result), max(cron_pashkeev_result)])
+
+        if max_val_res == max(cron_rand_result):
+            rand_win += 1
+        elif max_val_res == max(cron_cmp_result):
+            cmp_win += 1
+            print(desc_matrix, desc_matrix_cron, max(cron_cmp_result), max(cron_rand_result))
+        elif max_val_res == max(cron_pashkeev_result):
+            pashkeev_win += 1 
+
 
     for i in [all_rand_cron, all_cmp_cron, all_pashkeev_cron]:
         aver = sum(i)/len(i)
         i.append(aver)
-
+    print([22, 21, 19, 18, 17, 17, 15, 15, 15, 15, 14, 11, 11], [[14, 15, 15, 11], [18, 17, 15], [22, 15, 17], [21, 19, 11]], 53, 55)
     print("---------------Lab 4---------------")
-    print('Случайный: ', all_rand_cron[-1])
-    print('CMP: ', all_cmp_cron[-1])
-    print('Пашкеева: ', all_pashkeev_cron[-1])
+    print('Случайный: ', all_rand_cron[-1], rand_win)
+    print('CMP: ', all_cmp_cron[-1], cmp_win)
+    print('Пашкеева: ', all_pashkeev_cron[-1], pashkeev_win)
 
 main()
