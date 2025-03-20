@@ -89,9 +89,9 @@ def main():
 
         if max_val_res == max(cron_rand_result):
             rand_win += 1
+            print(desc_matrix, desc_matrix_cron, pashkeev_result, max(cron_rand_result), max(cron_pashkeev_result))
         elif max_val_res == max(cron_cmp_result):
             cmp_win += 1
-            print(desc_matrix, desc_matrix_cron, max(cron_cmp_result), max(cron_rand_result))
         elif max_val_res == max(cron_pashkeev_result):
             pashkeev_win += 1 
 

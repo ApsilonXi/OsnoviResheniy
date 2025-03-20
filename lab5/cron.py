@@ -4,6 +4,7 @@ def cron(matrix):
         max_index = summ.index(max(summ))
         min_index = summ.index(min(summ))
         delta = max(summ) - min(summ)
+        print(delta)
 
         swapped = False
 
@@ -20,6 +21,7 @@ def cron(matrix):
                     if matrix[max_index][j] > matrix[min_index][i] and matrix[max_index][j] - matrix[min_index][i] < delta:
                         matrix[max_index][j], matrix[min_index][i] = matrix[min_index][i], matrix[max_index][j]
                         swapped = True
+                        print(matrix)
                         break
                 if swapped: break
         if not swapped or delta in (0, 1): break
