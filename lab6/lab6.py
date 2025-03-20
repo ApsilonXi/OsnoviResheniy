@@ -1,179 +1,267 @@
+from random import randint, randrange
 import numpy as np
-import networkx as nx
-from random import sample, randint
-import matplotlib.pyplot as plt
 
-def DA_WAY(ways, start_da_way, end = False):
-    temp_ways = ways.copy()
-    mx, my = temp_ways.shape
-    new_start_da_way = start_da_way
-    da_way_to_queen = [new_start_da_way]
+def divide_into_intervals(number, N):
+    interval_size = number // N
+    intervals = []
+    start = 1
+    for i in range(N):
+        end = start + interval_size - 1
+        intervals.append((start, end))
+        start = end + 1 if i < (N-1) else end
+    intervals[-1] = (intervals[-1][0], 255)
+    return intervals
 
-    there_no_queen, there_no_queen[new_start_da_way] = np.zeros(mx, dtype=bool), True  
-    while not end:
-        new_da_way = np.where((temp_ways[new_start_da_way] != 0) & (~there_no_queen))[0]  
-        if new_da_way.size == 0:  
-            break
-        new_da_way = np.random.choice(new_da_way) 
-        temp_ways[new_start_da_way, new_da_way], temp_ways[new_da_way, new_start_da_way] = 0, 0
-        da_way_to_queen.append(new_da_way)
-        new_start_da_way = new_da_way
-        there_no_queen[new_da_way] = True  
-        end = np.all(temp_ways[new_start_da_way] == 0)
-    da_way_to_queen.append(start_da_way)
+def invert_nth_bit(num, n):
+    binary_num = '{:08b}'.format(num)
+    inverted_bit = '0' if binary_num[n] == '1' else '1'
+    new_binary_num = binary_num[:n] + inverted_bit + binary_num[n+1:]
+    inverted_int = int(new_binary_num, 2)
+    return inverted_int
 
-    return da_way_to_queen
+def Alg(T, N, M, p):
+    matrix = []
+    for i in T: 
+        matrix.append(i)
+    mins = np.zeros((M, N))
+    lead = np.zeros(N)
+    for row in range(0, M):
+        if row != M-1:
+            current_row = matrix[row]
+            Tt = np.power(current_row, p)
+            for i in range(0, len(lead)):
+                Tt = Tt + lead[i]**p
+                Tt[i] -= lead[i]**p
+            ind = np.argmin(Tt)
+            elem = current_row[ind]
+            mins[row][ind] = elem
+            lead[ind] = elem
+            matrix[row+1] = matrix[row+1] + lead
+        elif row == M-1:
+            current_row = matrix[row]
+            Tt = np.power(current_row, p)
+            for i in range(0, len(lead)):
+                Tt = Tt + lead[i]**p
+                Tt[i] -= lead[i]**p
+            ind = np.argmin(Tt)
+            elem = current_row[ind]
+            mins[row][ind] = elem
+            lead[ind] = elem
+    tasks = np.array([])
+    for i in np.transpose(mins):
+        non_zero_i = i[i != 0]
+        if non_zero_i.size > 0:
+            tasks = np.append(tasks, non_zero_i[-1])
+    return int(max(tasks))
 
-def sum_DA_WAY(ways, da_way):
-    sum_da_way = 0
-    for i in range(len(da_way) - 1):
-        dar_way = da_way[i]
-        dac_way = da_way[i+1]
-        sum_da_way += ways[dar_way][dac_way]
-    return (da_way, sum_da_way)
+def Plotnikov_Zverev(T, N, M):
+    matrix = []
+    for i in T: 
+        matrix.append(i)
+    load = np.zeros(N)
+    path = []
+    for row in range(M):
+        matrix[row] += load
+        tmp_row = matrix[row].copy()
+        e, i = np.min(tmp_row), np.argmin(tmp_row)
+        load[i] = e
+        path.append(i)
+    return int(max(load))
 
+def calculate_adaptation(DNA, p):
+    if p == 0:
+        return Plotnikov_Zverev(DNA, N, M)
+    elif p == 2:
+        return Alg(DNA, N, M, 2)
+    elif p == 3:
+        return Alg(DNA, N, M, 3)
 
-def DA_WAY_crossover(way1, way2):
-    da_way_part = randint(2, N-1)
-    p = way1[:da_way_part]
-    if type(p) != list:
-        p = p.tolist()
-    for i in range(da_way_part, len(way2)):
-        if way2[i] not in p:
-            p.append(way2[i])
-        else:
-            p.append(-1)
-    p[-1] = START_DA_WAY
-    for i in range(len(p)):
-        if p[i] == -1:
-            for j in range(0, N):
-                if j not in p:
-                    p[i] = j
-                    break
-    p = np.array(p)
-    return p
+def MUTATE(DNAp):
+    elemind = randint(0, len(DNAp)-1)  
+    genind = randint(0, len(DNAp[elemind])-1) 
+    p = randint(0, 7) 
+    mutated = invert_nth_bit(int(DNAp[elemind][genind]), p)
+    DNAp[elemind][genind] = mutated  
+    return DNAp
 
-def DA_WAY_mutation(p):
-    global N
-    inds = sample(range(1, N), 2)
-    P = np.array(p)
-    P[inds[0]], P[inds[1]] = P[inds[1]], P[inds[0]]
-    return P
-
-def graf_for_DA_WAY(result):
-    if type(result[0]) != list:
-        da_way_to_queen = result[0].tolist()
+def CROSSOVER(p1, p2, split):
+    global PM
+    DNAp = p1[0:split] + p2[split:]
+    r = randrange(100)
+    if r < PM and PM != 100:
+        return DNAp
     else:
-        da_way_to_queen = result[0]
-    edges = [(da_way_to_queen[i], da_way_to_queen[i + 1]) for i in range(len(da_way_to_queen) - 1)]
-    graf = nx.complete_graph(N)
-    position = nx.spring_layout(graf)
-    nx.draw(graf, position, with_labels=True, node_size=200, node_color="red", font_size=6)
-    nx.draw_networkx_edges(graf, position, edgelist=edges, edge_color='green', width=2)
-    plt.show()
+        DNAp = MUTATE(DNA)
+        return DNAp
 
-def main_func():
-    generation = []
-    for i in range(K):
-        g = DA_WAY(ways_to_queen, START_DA_WAY)
-        generation.append(sum_DA_WAY(ways_to_queen, g))
+def evaluate_criteria(generation):
+    criteria_results = {
+        "min_max_gene": min([individual[1] for individual in generation if max(individual[0]) == min([max(ind[0]) for ind in generation])]),
+        "min_sum_square": min([individual[1] for individual in generation if sum(x**2 for x in individual[0]) == min([sum(x**2 for x in ind[0]) for ind in generation])]),
+        "min_sum_cube": min([individual[1] for individual in generation if sum(x**3 for x in individual[0]) == min([sum(x**3 for x in ind[0]) for ind in generation])]),
+    }
+    return criteria_results
 
-    all_generations = [generation]
-    best_sum = min([i[1] for i in generation])
-    repeat = 1
-
-    f_mut = open(f"D:\\GitHub\\OsnoviResheniy\\mutation{res_num}.txt", 'w')
-    while repeat != Z:
-        f_mut.write(f"\nПоколение {len(all_generations)}:\n")
-        next_generation = []
-        for i in range(len(generation)):
-            if randint(0, 100) < Pk:
-                next_generation.append(generation[i])
+def main(gen, p):
+    GENERATIONS, BEST = {0 : gen}, min([specie[1] for specie in gen])
+    COUNTER = 1
+    dictid = 0
+    while COUNTER != Z:
+        nextgen = []
+        for i in range(len(gen)): 
+            r = randrange(100)
+            if r < PK and PK != 100:
+                nextgen.append(gen[i])
+                
             else:
                 partner_id = i
                 while partner_id == i:
-                    partner_id = randint(0, (len(generation)-1))
-                    
-                f_mut.write("Родители:\n")
-                f_mut.write(f"Родитель 1: {generation[i]}\n")
-                f_mut.write(f"Родитель 2: {generation[partner_id]}\n")
+                    partner_id = randint(0, (len(gen)-1))
+                
+                split = randint(0, len(T)-1)
 
-                child1 = DA_WAY_crossover(generation[i][0], generation[partner_id][0])
-                child2 = DA_WAY_crossover(generation[partner_id][0], generation[i][0])
+                Pdna1 = CROSSOVER(gen[i][0], gen[partner_id][0], split)
+                Pdna2 = CROSSOVER(gen[partner_id][0], gen[i][0], split)
+                P1 = (Pdna1, calculate_adaptation(Pdna1, p))
+                P2 = (Pdna2, calculate_adaptation(Pdna2, p))
 
-                f_mut.write("Дети:\n")
-                f_mut.write(f"Ребёнок 1: {(child1, sum_DA_WAY(ways_to_queen, child1))}\n")
-                f_mut.write(f"Ребёнок 2: {(child2, sum_DA_WAY(ways_to_queen, child2))}\n")
-
-                if randint(0, 100) < Pm:
-                    child1_mut = DA_WAY_mutation(child1)
-                    child2_mut = DA_WAY_mutation(child2)
-
-                    f_mut.write("Дети после мутации:\n")
-                    f_mut.write(f"Ребёнок 1: {(child1_mut, sum_DA_WAY(ways_to_queen, child1_mut))}\n")
-                    f_mut.write(f"Ребёнок 2: {(child2_mut, sum_DA_WAY(ways_to_queen, child2_mut))}\n")
-
-                    P1 = sum_DA_WAY(ways_to_queen, child1_mut)
-                    P2 = sum_DA_WAY(ways_to_queen, child2_mut)
-                else:
-                    P1 = sum_DA_WAY(ways_to_queen, child1)
-                    P2 = sum_DA_WAY(ways_to_queen, child2)
-
-                contest = [generation[i][1], P1[1], P2[1]]
+                contest = [gen[i][1], P1[1], P2[1]]
                 win = min(contest)
                 win_id = contest.index(win)
 
                 if win_id == 0:
-                    next_generation.append(generation[i])
+                    nextgen.append(gen[i])
                 elif win_id == 1:
-                    next_generation.append(P1)
+                    nextgen.append(P1)
                 elif win_id == 2:
-                    next_generation.append(P2)
+                    nextgen.append(P2)
+        
+        newBEST = min([specie[1] for specie in nextgen])
+        if newBEST == BEST:
+            COUNTER += 1
+        elif newBEST < BEST:
+            BEST = newBEST
+            COUNTER = 1
+        
+        dictid += 1
+        GENERATIONS[dictid] = nextgen
+        gen = nextgen
+    return COUNTER, BEST, GENERATIONS
 
-        new_best_sum = min([i[1] for i in next_generation])
-        if new_best_sum == best_sum:
-            repeat += 1
-        elif new_best_sum < best_sum:
-            best_sum = new_best_sum
-            repeat = 1
 
-        all_generations.append(next_generation)
-        generation = next_generation
+print("\n-----------------Lab 6-----------------\n")
 
-    DA_WAY_TO_QUEEN = next(i for i in all_generations[-1] if i[1] == best_sum)
-    print("\n-------------------------")
-    print(f"Лучший результат: {best_sum}")
-    print("-------------------------\n")
-    with open(f"D:\\GitHub\\OsnoviResheniy\\result{res_num}.txt", 'w') as f:
-        for i in range(len(all_generations)):
-            f.write(f"{i+1} | {all_generations[i]}\n")
-    return DA_WAY_TO_QUEEN
-
+M = int(input("M = "))
 N = int(input("N = "))
-T1 = int(input("Нижняя граница: "))
-T2 = int(input("Верхняя граница: "))
-Z = int(input("Z = "))
-K = int(input("K = "))
-Pm = int(input("Pm = "))
-Pk = int(input("Pk = "))
+min_val = int(input("Min = "))
+max_val = int(input("Max = "))
+Z = int(input("Z (колво повторов) = "))
+K = int(input("K (колво особей в поколении) = "))
+PM = int(input("PM = "))
+PK = int(input("PK = "))
+'''M = 12
+N = 4
+min_val = 10
+max_val = 20
+Z = 100
+K = 100
+PM = 80
+PK = 80'''
 
-res_num = 0
+T = [[randint(min_val, max_val) for _ in range(N)] for _ in range(M)]
+INTERVALS = divide_into_intervals(255, N)
 
-tril = np.tril(np.random.randint(T1, T2, size=(N, N)), -1)
-ways_to_queen  = tril + tril.T
-print(ways_to_queen)
+gen_minmax, gen_square, gen_cube = [], [], []
+all_minmax, all_square, all_cube = [], [], []
+win_minmax, win_square, win_cube = 0, 0, 0
 
-START_DA_WAY = int(input("стартовая вершина: "))
+for i in range(K):
+    DNA = []
+    for j in T: 
+        DNA.append([randint(min_val, max_val) for _ in range(N)])
+    gen_minmax.append((DNA, calculate_adaptation(DNA, 0)))
+    gen_square.append((DNA, calculate_adaptation(DNA, 2)))
+    gen_cube.append((DNA,   calculate_adaptation(DNA, 3)))
 
-graf_for_DA_WAY(main_func())
+counts_minmax, best_minmax, gens_minmax = main(gen_minmax, 0)
+counts_square, best_square, gens_square = main(gen_square, 2)
+counts_cube, best_cube, gens_cube = main(gen_cube, 3)
 
-while True:
-    ch = input("Продолжить с той же матрицей? (Y/N)")
-    if ch == "N":
-        break
-    res_num += 1
-    Z = int(input("Z = "))
-    K = int(input("K = "))
-    Pm = int(input("Pm = "))
-    Pk = int(input("Pk = "))
-    graf_for_DA_WAY(main_func())
+with open("lab6\\minimax.txt", "w", encoding='utf-8') as file:
+    file.write("===============Минимакс===============\n")
+    file.write(f"ЛУЧШАЯ ПРИСПОСОБЛЯЕМОСТЬ: {best_minmax}\n")
+    file.write(f"КОЛИЧЕСТВО ПОВТОРОВ: {counts_minmax}\n")
+    file.write(f"КОЛИЧЕСТВО ПОЛУЧЕННЫХ ПОКОЛЕНИЙ: {len(list(gens_minmax.keys()))}\n")
+    for key in gens_minmax:
+        generation_as_lists_minmax = [(np.array(dna[0]).tolist(), dna[1]) for dna in gens_minmax[key]]
+        file.write(f"Поколение {key}: \n")
+        for i in generation_as_lists_minmax:
+            all_minmax.append(i[1])
+            for j in i[0]:
+                if i[0][len(i[0])-1] == j:
+                    file.write(f"{j} ")
+                else:
+                    file.write(f"{j}\n")
+            file.write(f"{i[1]}\n")
+            file.write('-----------------\n')
+    file.write("========================================\n")
+
+with open("lab6\\square.txt", "w", encoding='utf-8') as file:
+    file.write("==============Квадратичный==============\n")
+    file.write(f"ЛУЧШАЯ ПРИСПОСОБЛЯЕМОСТЬ: {best_square}\n")
+    file.write(f"КОЛИЧЕСТВО ПОВТОРОВ: {counts_square}\n")
+    file.write(f"КОЛИЧЕСТВО ПОЛУЧЕННЫХ ПОКОЛЕНИЙ: {len(list(gens_square.keys()))}\n")
+    for key in gens_square:
+        generation_as_lists_square = [(np.array(dna[0]).tolist(), dna[1]) for dna in gens_square[key]]
+        file.write(f"Поколение {key}: \n")
+        for i in generation_as_lists_square:
+            all_square.append(i[1])
+            for j in i[0]:
+                if i[0][len(i[0])-1] == j:
+                    file.write(f"{j} ")
+                else:
+                    file.write(f"{j}\n")
+            file.write(f"{i[1]}\n")
+            file.write('-----------------\n')
+    file.write("============================================\n")
+
+with open("lab6\\cube.txt", "w", encoding='utf-8') as file:
+    file.write("================Кубический================\n")
+    file.write(f"ЛУЧШАЯ ПРИСПОСОБЛЯЕМОСТЬ: {best_cube}\n")
+    file.write(f"КОЛИЧЕСТВО ПОВТОРОВ: {counts_cube}\n")
+    file.write(f"КОЛИЧЕСТВО ПОЛУЧЕННЫХ ПОКОЛЕНИЙ: {len(list(gens_cube.keys()))}\n")
+    for key in gens_cube:
+        generation_as_lists_cube = [(np.array(dna[0]).tolist(), dna[1]) for dna in gens_cube[key]]
+        file.write(f"Поколение {key}: \n")
+        for i in generation_as_lists_cube:
+            all_cube.append(i[1])
+            for j in i[0]:
+                if i[0][len(i[0])-1] == j:
+                    file.write(f"{j} ")
+                else:
+                    file.write(f"{j}\n")
+            file.write(f"{i[1]}\n")
+            file.write('-----------------\n')
+    file.write("============================================\n")
+    
+for i in range(K):
+    min_val_res = min([generation_as_lists_minmax[i][1], generation_as_lists_square[i][1], generation_as_lists_cube[i][1]])
+
+    if min_val_res == generation_as_lists_minmax[i][1]:
+        win_minmax += 1
+    elif min_val_res == generation_as_lists_square[i][1]:
+        win_square += 1 
+    elif min_val_res == generation_as_lists_cube[i][1]:
+        win_cube += 1
+
+for i in [all_minmax, all_square, all_cube]:
+    i.append(sum(i)/len(i))
+
+print("\n---------------Результаты---------------")
+print(f"{'':<17}{'Ср. знач':<5} {'Победы':<5}")
+print(f"{'Минимаксный:':<15} {round(all_minmax[-1], 2):>8} | {win_minmax:<5}")
+print(f"{'Квадратичный:':<15} {round(all_square[-1], 2):>8} | {win_square:<5}")
+print(f"{'Кубический:':<15} {round(all_cube[-1], 2):>8} | {win_cube:<5}")
+print("\nРезультаты успешно записаны в файл.\n")
+
+

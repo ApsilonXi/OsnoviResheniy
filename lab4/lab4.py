@@ -99,7 +99,7 @@ def main():
 
         rand_loads_zver, max_rand_zver = Plotnikov_Zverev(random_sorted_matrix.tolist(), N, M)
         asc_loads_zver, max_asc_zver = Plotnikov_Zverev(asc_sorted_matrix.tolist(), N, M)
-        desc_loads_zver, max_desc_zver =Plotnikov_Zverev(desc_sorted_matrix.tolist(), N, M)
+        desc_loads_zver, max_desc_zver = Plotnikov_Zverev(desc_sorted_matrix.tolist(), N, M)
 
         all_rand_zver.append(max_rand_zver)
         all_asc_zver.append(max_asc_zver)

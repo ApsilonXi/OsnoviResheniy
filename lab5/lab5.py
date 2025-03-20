@@ -99,7 +99,7 @@ def main():
         aver = sum(i)/len(i)
         i.append(aver)
 
-    print("---------------Lab 4---------------")
+    print("---------------Lab 5---------------")
     print('Случайный: ', all_rand_cron[-1], rand_win)
     print('CMP: ', all_cmp_cron[-1], cmp_win)
     print('Пашкеева: ', all_pashkeev_cron[-1], pashkeev_win)
