@@ -1,12 +1,13 @@
 import random
 
 def cmp_schedule(tasks, processors):
-    load = [[] for _ in range(processors)]
-
-    for task in tasks:
-        min_index = load.index(min(load))
-        load[min_index].append(task)
-    return load
+    load = [0 for i in range(processors)]
+    loads = [[] for i in range(processors)]
+    for i in tasks:
+        load_min_index = load.index(min(load))
+        load[load_min_index] += i
+        loads[load_min_index].append(i)
+    return loads
 
 def pashkeev_back(n, tasks, load, processors):
     for i in range(len(tasks)):
