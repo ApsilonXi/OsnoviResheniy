@@ -21,10 +21,21 @@ def cron(matrix):
                     if matrix[max_index][j] > matrix[min_index][i] and matrix[max_index][j] - matrix[min_index][i] < delta:
                         matrix[max_index][j], matrix[min_index][i] = matrix[min_index][i], matrix[max_index][j]
                         swapped = True
-                        print(matrix)
                         break
+                    
+
                 if swapped: break
+        print(matrix)
         if not swapped or delta in (0, 1): break
     return summ
 
-print(cron([[14, 15, 15, 11], [18, 17, 15], [22, 15, 17], [21, 19, 11]]))
+def cmp_schedule(tasks, processors):
+    load = [0 for i in range(processors)]
+    loads = [[] for i in range(processors)]
+    for i in tasks:
+        load_min_index = load.index(min(load))
+        load[load_min_index] += i
+        loads[load_min_index].append(i)
+    return loads
+
+print(cron([[15, 12, 10], [14, 12, 10], [17, 17], [16, 16]]))

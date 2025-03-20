@@ -90,16 +90,15 @@ def main():
         if max_val_res == max(cron_rand_result):
             rand_win += 1
             print(desc_matrix, desc_matrix_cron, pashkeev_result, max(cron_rand_result), max(cron_pashkeev_result))
-        elif max_val_res == max(cron_cmp_result):
-            cmp_win += 1
         elif max_val_res == max(cron_pashkeev_result):
             pashkeev_win += 1 
-
-
+        elif max_val_res == max(cron_cmp_result):
+            cmp_win += 1
+        
     for i in [all_rand_cron, all_cmp_cron, all_pashkeev_cron]:
         aver = sum(i)/len(i)
         i.append(aver)
-    #print([22, 21, 19, 18, 17, 17, 15, 15, 15, 15, 14, 11, 11], [[14, 15, 15, 11], [18, 17, 15], [22, 15, 17], [21, 19, 11]], 53, 55)
+
     print("---------------Lab 4---------------")
     print('Случайный: ', all_rand_cron[-1], rand_win)
     print('CMP: ', all_cmp_cron[-1], cmp_win)
