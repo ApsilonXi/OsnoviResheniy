@@ -11,8 +11,6 @@ def distribute_task_to_processor(processor_loads, task):
 def rebalance_loads(processor_loads):
     max_load_index = processor_loads.index(max(processor_loads))
     min_load_index = processor_loads.index(min(processor_loads))
-    
-    # Переносим часть нагрузки от самого загруженного процессора к самому свободному
     excess_load = (processor_loads[max_load_index] - processor_loads[min_load_index]) // 2
     processor_loads[max_load_index] -= excess_load
     processor_loads[min_load_index] += excess_load
@@ -63,22 +61,18 @@ def main():
     all_desc_min = []
 
     for i in range(num_massives):
-        # Генерация случайного массива
         matrix = [[random.randint(min_val, max_val) for _ in range(N)] for _ in range(M)]
 
         random_sorted_matrix = matrix
         asc_sorted_matrix = sorted(matrix, key=sum)
         desc_sorted_matrix = sorted(matrix, key=sum, reverse=True)
 
-        # Максимальные значения строк
         max_values = [max(row) for row in matrix]
         max_barrier = math.ceil(sum(max_values) / N)
 
-        # Минимальные значения строк
         min_values = [min(row) for row in matrix]
         min_barrier = math.ceil(sum(min_values) / N)
 
-        # Выполнение алгоритма для разных вариантов сортировки
         rand_loads_max, max_rand = schedule_min_elements(random_sorted_matrix, max_barrier)
         asc_loads_max, max_asc = schedule_min_elements(asc_sorted_matrix, max_barrier)
         desc_loads_max, max_desc = schedule_min_elements(desc_sorted_matrix, max_barrier)
@@ -96,7 +90,6 @@ def main():
         all_asc_min.append(min_asc)
         all_desc_min.append(min_desc)
 
-        # Определение победителя среди сортировок по максимальной нагрузке
         max_val_res = min([max(rand_loads_max), max(asc_loads_max), max(desc_loads_max)])
 
         if max_val_res == max(rand_loads_max):
@@ -115,7 +108,6 @@ def main():
         elif min_val_res == max(desc_loads_min):
             desc_win_min += 1
 
-    # Вычисление среднего значения нагрузки
     for i in [all_rand_max, all_asc_max, all_desc_max]:
         aver = sum(i)/len(i)
         i.append(aver)
