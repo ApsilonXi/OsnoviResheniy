@@ -94,14 +94,6 @@ def CROSSOVER(p1, p2, split):
         DNAp = MUTATE(DNA)
         return DNAp
 
-def evaluate_criteria(generation):
-    criteria_results = {
-        "min_max_gene": min([individual[1] for individual in generation if max(individual[0]) == min([max(ind[0]) for ind in generation])]),
-        "min_sum_square": min([individual[1] for individual in generation if sum(x**2 for x in individual[0]) == min([sum(x**2 for x in ind[0]) for ind in generation])]),
-        "min_sum_cube": min([individual[1] for individual in generation if sum(x**3 for x in individual[0]) == min([sum(x**3 for x in ind[0]) for ind in generation])]),
-    }
-    return criteria_results
-
 def main(gen, p):
     GENERATIONS, BEST = {0 : gen}, min([specie[1] for specie in gen])
     COUNTER = 1
@@ -262,6 +254,3 @@ print(f"{'':<17}{'Ср. знач':<5} {'Победы':<5}")
 print(f"{'Минимаксный:':<15} {round(all_minmax[-1], 2):>8} | {win_minmax:<5}")
 print(f"{'Квадратичный:':<15} {round(all_square[-1], 2):>8} | {win_square:<5}")
 print(f"{'Кубический:':<15} {round(all_cube[-1], 2):>8} | {win_cube:<5}")
-print("\nРезультаты успешно записаны в файл.\n")
-
-
