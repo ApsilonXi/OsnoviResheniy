@@ -1,157 +1,154 @@
 import numpy as np
-from random import random
 
-def Alg(T, N, M, p):
-    matrix = [row.copy() for row in T]
-    mins = np.zeros((M, N))
-    lead = np.zeros(N)
-    
-    for row in range(M):
-        current_row = matrix[row].copy()
-        finite_mask = ~np.isinf(current_row)
-        
-        if not np.any(finite_mask):
-            continue
-            
-        # Модифицированное вычисление с нелинейностью
-        Tt = np.full(N, np.inf)
-        Tt[finite_mask] = np.power(current_row[finite_mask], p) + np.power(lead[finite_mask], p/2)
-        
-        min_val = np.min(Tt[finite_mask])
-        candidates = np.where((Tt == min_val) & finite_mask)[0]
-        
-        if len(candidates) == 0:
-            continue
-            
-        ind = candidates[0]
-        elem = current_row[ind]
-        mins[row][ind] = elem
-        lead[ind] = elem
-        
-        if row < M - 1:
-            update_mask = ~np.isinf(matrix[row+1])
-            matrix[row+1][update_mask] += lead[update_mask]
-    
-    if np.all(mins == 0):
-        return np.inf
-    return int(np.max(np.where(mins != 0, mins, -np.inf).max(axis=0).max()))
+import numpy as np
 
-def Plotnikov_Zverev(T, N, M):
-    matrix = [row.copy() for row in T]
-    load = np.zeros(N)
-    
-    for row in range(M):
-        finite_mask = ~np.isinf(matrix[row])
-        current_row = matrix[row].copy()
-        current_row[~finite_mask] = np.inf
-        
-        if not np.any(finite_mask):
-            continue
-            
-        min_val = np.min(current_row[finite_mask])
-        candidates = np.where((current_row == min_val) & finite_mask)[0]
-        
-        if len(candidates) == 0:
-            continue
-            
-        ind = candidates[0]
-        load[ind] = min_val
-        
-        if row < M - 1:
-            update_mask = ~np.isinf(matrix[row+1])
-            matrix[row+1][update_mask] += load[update_mask]
-    
-    return int(np.max(load)) if np.any(load != 0) else np.inf
+def generate_random_matrix(M, N, min_val=1, max_val=10, inf_prob=0.2):
+    matrix = np.random.randint(min_val, max_val + 1, size=(M, N)).astype(float)
+    mask = np.random.random(size=(M, N)) < inf_prob
+    for i in range(M):
+        if np.all(mask[i]):  
+            j = np.random.randint(0, N)  
+            mask[i, j] = False 
+    matrix[mask] = np.inf
+    return matrix
 
-def Sort(method: int, matrix):
-    if method == 1:
-        # Без изменений (исходная матрица)
+def sort_matrix(matrix, sort_type='Исходная'):
+    if sort_type == 'Исходная':
         return matrix.copy()
-    elif method == 2:
-        # Сортировка по количеству бесконечностей в строке (по убыванию)
-        inf_counts = np.sum(np.isinf(matrix), axis=1)
-        return matrix[np.argsort(-inf_counts)]  # минус для сортировки по убыванию
-    elif method == 3:
-        # Сортировка сначала по количеству бесконечностей (по убыванию), затем по сумме элементов
-        inf_counts = np.sum(np.isinf(matrix), axis=1)
-        row_sums = np.array([np.sum(row[np.isfinite(row)]) for row in matrix])
-        # Сортируем по убыванию количества бесконечностей и убыванию суммы
-        sort_indices = np.lexsort((-row_sums, -inf_counts))  # минус для сортировки по убыванию
-        return matrix[sort_indices]
-    return matrix.copy()
+    rows = []
+    for i, row in enumerate(matrix):
+        inf_count = np.sum(row == np.inf)
+        row_sum = np.sum(row[row != np.inf])
+        rows.append((i, inf_count, row_sum))
+    if sort_type == 'Кол-во бесконечностей':
+        rows.sort(key=lambda x: (-x[1], x[0]))
+    elif sort_type == 'Кол-во бесконечностей и сумма':
+        rows.sort(key=lambda x: (-x[1], -x[2], x[0]))
+    sorted_matrix = np.array([matrix[row[0]] for row in rows])
+    return sorted_matrix
 
-def generate_matrix(M, N, min_val, max_val, inf_prob):
-    base = np.random.randint(min_val, max_val + 1, size=(M, N))
-    inf_mask = np.random.random(size=(M, N)) < inf_prob
-    return np.where(inf_mask, np.inf, base)
-
-def main():
-    M = int(input("M: "))
-    N = int(input("N: "))
-    min_val = int(input("Min: "))
-    max_val = int(input("Max: "))
-    num_massives = 100
-    inf_prob = 0.3  # Вероятность бесконечности
-
-    results = {
-        'original': {'minimax': [], 'square': [], 'cube': []},
-        'inf_count': {'minimax': [], 'square': [], 'cube': []},
-        'inf_count_sum': {'minimax': [], 'square': [], 'cube': []}
-    }
-    wins = {
-        'original': {'minimax': 0, 'square': 0, 'cube': 0},
-        'inf_count': {'minimax': 0, 'square': 0, 'cube': 0},
-        'inf_count_sum': {'minimax': 0, 'square': 0, 'cube': 0}
-    }
-
-    for _ in range(num_massives):
-        T = generate_matrix(M, N, min_val, max_val, inf_prob)
-
-
-        matrix_original = Sort(1, T)
-        matrix_inf_count = Sort(3, T)
-        matrix_inf_count_sum = Sort(2, T)
-
-        for method, matrix in [('original', matrix_original),
-                             ('inf_count', matrix_inf_count),
-                             ('inf_count_sum', matrix_inf_count_sum)]:
-            
-            res_minimax = Plotnikov_Zverev(matrix, N, M)
-            res_square = Alg(matrix, N, M, 2)
-            res_cube = Alg(matrix, N, M, 3)
-            
-            results[method]['minimax'].append(res_minimax)
-            results[method]['square'].append(res_square)
-            results[method]['cube'].append(res_cube)
-            
-            # Сравниваем только конечные результаты
-            valid_results = {
-                'minimax': res_minimax,
-                'square': res_square,
-                'cube': res_cube
-            }
-            valid_results = {k: v for k, v in valid_results.items() if not np.isinf(v)}
-            
-            if valid_results:
-                winner = min(valid_results, key=valid_results.get)
-                wins[method][winner] += 1
-
-    # Вывод результатов
-    print("---------------Lab 7---------------")
-    print('---------------Исходная матрица---------------')
-    print(f'Минимальный: {np.mean(results["original"]["minimax"]):.2f} {wins["original"]["minimax"]}')
-    print(f'Квадратичный: {np.mean(results["original"]["square"]):.2f} {wins["original"]["square"]}')
-    print(f'Кубический: {np.mean(results["original"]["cube"]):.2f} {wins["original"]["cube"]}')
+def PZ_algorithm(matrix, criterion='Минимакс', sort_type='Исходная'):
+    M, N = len(matrix), len(matrix[0])
+    tasks = []
+    for i in range(M):
+        row = matrix[i]
+        if criterion == 'Минимакс':
+            weight = max([x for x in row if x != np.inf])
+        elif criterion == 'Квадратичный':
+            weight = sum(x ** 2 for x in row if x != np.inf)
+        elif criterion == 'Кубический':
+            weight = sum(x ** 3 for x in row if x != np.inf)
+        tasks.append((i, weight))
+    tasks.sort(key=lambda x: -x[1])
+    sums = np.zeros(N)
     
-    print('---------------По количеству бесконечностей---------------')
-    print(f'Минимальный: {np.mean(results["inf_count"]["minimax"]):.2f} {wins["inf_count"]["minimax"]}')
-    print(f'Квадратичный: {np.mean(results["inf_count"]["square"]):.2f} {wins["inf_count"]["square"]}')
-    print(f'Кубический: {np.mean(results["inf_count"]["cube"]):.2f} {wins["inf_count"]["cube"]}')
-    
-    print('---------------По количеству бесконечностей и сумме---------------')
-    print(f'Минимальный: {np.mean(results["inf_count_sum"]["minimax"]):.2f} {wins["inf_count_sum"]["minimax"]}')
-    print(f'Квадратичный: {np.mean(results["inf_count_sum"]["square"]):.2f} {wins["inf_count_sum"]["square"]}')
-    print(f'Кубический: {np.mean(results["inf_count_sum"]["cube"]):.2f} {wins["inf_count_sum"]["cube"]}')
+    for task in tasks:
+        task_idx = task[0]
+        current_pi = np.argmin(sums)
+        if matrix[task_idx][current_pi] == np.inf:
+            ch = sums.copy()
+            while matrix[task_idx][current_pi] == np.inf:
+                ch[current_pi] = np.inf
+                current_pi = np.argmin(ch)
+        sums[current_pi] += matrix[task_idx][current_pi]
+    return sums, np.max(sums)
 
-if __name__ == "__main__":
-    main()
+M = int(input("M: "))
+N = int(input("N: "))
+min_val = int(input("Min: "))
+max_val = int(input("Max: "))
+num_matrix = 100
+
+all_rand_minimax, all_rand_square, all_rand_cube = [], [], []
+all_count_minimax, all_count_square, all_count_cube = [], [], []
+all_sum_minimax, all_sum_square, all_sum_cube = [], [], []
+
+rand_win_minimax, rand_win_square, rand_win_cube = 0, 0, 0
+count_win_minimax, count_win_square, count_win_cube = 0, 0, 0
+sum_win_minimax, sum_win_square, sum_win_cube = 0, 0, 0
+
+for i in range(num_matrix):
+    matrix = generate_random_matrix(M, N, min_val, max_val)
+
+    for sort_type in ['Исходная', 'Кол-во бесконечностей', 'Кол-во бесконечностей и сумма']:
+        for crit in ['Минимакс', 'Квадратичный', 'Кубический']:
+            matrix_sort = sort_matrix(matrix, sort_type)
+            sums, makespan = PZ_algorithm(matrix_sort, crit, sort_type)
+            match sort_type:
+                case 'Исходная':
+                    match crit:
+                        case 'Минимакс':
+                            all_rand_minimax.append(makespan)
+                        case 'Квадратичный':
+                            all_rand_square.append(makespan)
+                        case 'Кубический':
+                            all_rand_cube.append(makespan)
+                case 'Кол-во бесконечностей':
+                    match crit:
+                        case 'Минимакс':
+                            all_count_minimax.append(makespan)
+                        case 'Квадратичный':
+                            all_count_square.append(makespan)
+                        case 'Кубический':
+                            all_count_cube.append(makespan)
+                case 'Кол-во бесконечностей и сумма':
+                    match crit:
+                        case 'Минимакс':
+                            all_sum_minimax.append(makespan)
+                        case 'Квадратичный':
+                            all_sum_square.append(makespan)
+                        case 'Кубический':
+                            all_sum_cube.append(makespan)
+
+for i in [all_rand_minimax, all_rand_square, all_rand_cube]:
+    aver = sum(i)/len(i)
+    i.append(aver)
+
+for i in [all_count_minimax, all_count_square, all_count_cube]:
+    aver = sum(i)/len(i)
+    i.append(aver)
+
+for i in [all_sum_minimax, all_sum_square, all_sum_cube]:
+    aver = sum(i)/len(i)
+    i.append(aver)
+
+for i in range(num_matrix):
+    min_res_val_rand = min(all_rand_minimax[i], all_rand_square[i], all_rand_cube[i])
+    if min_res_val_rand == all_rand_minimax[i]:
+        rand_win_minimax += 1
+    elif min_res_val_rand == all_rand_square[i]:
+        rand_win_square += 1
+    elif min_res_val_rand == all_rand_cube[i]:
+        rand_win_cube += 1 
+
+    min_res_val_count = min(all_count_minimax[i], all_count_square[i], all_count_cube[i])
+    if min_res_val_count == all_count_minimax[i]:
+        count_win_minimax += 1
+    elif min_res_val_count == all_count_square[i]:
+        count_win_square += 1
+    elif min_res_val_count == all_count_cube[i]:
+        count_win_cube += 1
+
+    min_res_val_sum = min(all_sum_minimax[i], all_sum_square[i], all_sum_cube[i])
+    if min_res_val_sum == all_sum_minimax[i]:
+        sum_win_minimax += 1
+    elif min_res_val_sum == all_sum_square[i]:
+        sum_win_square += 1
+    elif min_res_val_sum == all_sum_cube[i]:
+        sum_win_cube += 1
+
+print("\n---------------Lab 7---------------")
+print(f"{'Исходная матрица:':<25}{'Ср.знач':<10}{'Победы':<10}")
+print(f"{'Минимакс:':<25}{round(all_rand_minimax[-1], 2):<10} | {rand_win_minimax:<5}")
+print(f"{'Квадратичный:':<25}{round(all_rand_square[-1], 2):<10} | {rand_win_square:<5}")
+print(f"{'Кубический:':<25}{round(all_rand_cube[-1], 2):<10} | {rand_win_cube:<5}")
+print(f"\n{'Кол-во бесконечностей:':<25}{'Ср.знач':<10}{'Победы':<10}")
+print(f"{'Минимакс:':<25}{round(all_count_minimax[-1], 2):<10} | {count_win_minimax:<5}")
+print(f"{'Квадратичный:':<25}{round(all_count_square[-1], 2):<10} | {count_win_square:<5}")
+print(f"{'Кубический:':<25}{round(all_count_cube[-1], 2):<10} | {count_win_cube:<5}")
+print(f"\n{'Кол-во и суммы:':<25}{'Ср.знач':<10}{'Победы':<10}")
+print(f"{'Минимакс:':<25}{round(all_sum_minimax[-1], 2):<10} | {sum_win_minimax:<5}")
+print(f"{'Квадратичный:':<25}{round(all_sum_square[-1], 2):<10} | {sum_win_square:<5}")
+print(f"{'Кубический:':<25}{round(all_sum_cube[-1], 2):<10} | {sum_win_cube:<5}")
+
+
