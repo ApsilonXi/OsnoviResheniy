@@ -2,66 +2,79 @@ import numpy as np
 from random import random
 
 def Alg(T, N, M, p):
-    matrix = [row.copy() for row in T]
+    matrix = T.copy()
     mins = np.zeros((M, N))
     lead = np.zeros(N)
     
     for row in range(M):
-        current_row = matrix[row].copy()
-        finite_mask = ~np.isinf(current_row)
+        current_row = matrix[row]
+        Tt = np.power(current_row, p)
         
-        if not np.any(finite_mask):
-            continue
-            
-        # Модифицированное вычисление с нелинейностью
-        Tt = np.full(N, np.inf)
-        Tt[finite_mask] = np.power(current_row[finite_mask], p) + np.power(lead[finite_mask], p/2)
+        # Обработка бесконечностей
+        Tt[np.isinf(Tt)] = np.inf  # Сохраняем бесконечности
         
-        min_val = np.min(Tt[finite_mask])
-        candidates = np.where((Tt == min_val) & finite_mask)[0]
+        # Добавляем lead только к конечным значениям
+        for i in range(N):
+            if not np.isinf(Tt[i]):
+                Tt[i] += lead[i]**p
         
+        # Находим минимальное значение, игнорируя бесконечности
+        min_val = np.min(Tt[np.isfinite(Tt)]) if np.any(np.isfinite(Tt)) else np.inf
+        candidates = np.where(Tt == min_val)[0]
+        
+        # Если все элементы бесконечны, выбираем первый
         if len(candidates) == 0:
-            continue
-            
-        ind = candidates[0]
-        elem = current_row[ind]
-        mins[row][ind] = elem
-        lead[ind] = elem
+            ind = 0
+        else:
+            ind = candidates[0]
         
-        if row < M - 1:
-            update_mask = ~np.isinf(matrix[row+1])
-            matrix[row+1][update_mask] += lead[update_mask]
-    
-    if np.all(mins == 0):
-        return np.inf
-    return int(np.max(np.where(mins != 0, mins, -np.inf).max(axis=0).max()))
+        elem = current_row[ind]
+        mins[row][ind] = elem if not np.isinf(elem) else 0
+        lead[ind] = elem if not np.isinf(elem) else lead[ind]
+        
+        if row != M-1:
+            # Добавляем lead только к конечным значениям в следующей строке
+            for i in range(N):
+                if not np.isinf(matrix[row+1][i]):
+                    matrix[row+1][i] += lead[i] if not np.isinf(lead[i]) else 0
 
-def Plotnikov_Zverev(T, N, M):
-    matrix = [row.copy() for row in T]
+    tasks = np.array([])
+    for i in np.transpose(mins):
+        non_zero = i[i != 0]
+        if len(non_zero) > 0:
+            tasks = np.append(tasks, non_zero[-1])
+        else:
+            tasks = np.append(tasks, 0)
+    
+    return tasks, np.max(tasks[np.isfinite(tasks)]) if np.any(np.isfinite(tasks)) else np.inf
+
+
+def Plotnikov_Zverev(matrix, N, M): 
     load = np.zeros(N)
+    path = []
     
     for row in range(M):
-        finite_mask = ~np.isinf(matrix[row])
-        current_row = matrix[row].copy()
-        current_row[~finite_mask] = np.inf
+        # Добавляем load только к конечным значениям
+        for i in range(N):
+            if not np.isinf(matrix[row][i]):
+                matrix[row][i] += load[i] if not np.isinf(load[i]) else 0
         
-        if not np.any(finite_mask):
-            continue
-            
-        min_val = np.min(current_row[finite_mask])
-        candidates = np.where((current_row == min_val) & finite_mask)[0]
+        tmp_row = matrix[row].copy()
         
-        if len(candidates) == 0:
-            continue
-            
-        ind = candidates[0]
-        load[ind] = min_val
+        # Находим минимальное значение, игнорируя бесконечности
+        if np.all(np.isinf(tmp_row)):
+            e, i = np.inf, 0
+        else:
+            min_val = np.min(tmp_row[np.isfinite(tmp_row)])
+            candidates = np.where(tmp_row == min_val)[0]
+            i = candidates[0]
+            e = tmp_row[i]
         
-        if row < M - 1:
-            update_mask = ~np.isinf(matrix[row+1])
-            matrix[row+1][update_mask] += load[update_mask]
+        load[i] = e if not np.isinf(e) else load[i]
+        path.append(i)
     
-    return int(np.max(load)) if np.any(load != 0) else np.inf
+    max_load = np.max(load[np.isfinite(load)]) if np.any(np.isfinite(load)) else np.inf
+    return load, max_load
 
 def Sort(method: int, matrix):
     if method == 1:
@@ -81,11 +94,14 @@ def Sort(method: int, matrix):
     return matrix.copy()
 
 def generate_matrix(M, N, min_val, max_val, inf_prob):
+    """Генерация матрицы с разными значениями для каждого процессора"""
     base = np.random.randint(min_val, max_val + 1, size=(M, N))
     inf_mask = np.random.random(size=(M, N)) < inf_prob
     return np.where(inf_mask, np.inf, base)
 
 def main():
+
+    
     M = int(input("M: "))
     N = int(input("N: "))
     min_val = int(input("Min: "))
@@ -107,18 +123,18 @@ def main():
     for _ in range(num_massives):
         T = generate_matrix(M, N, min_val, max_val, inf_prob)
 
-
         matrix_original = Sort(1, T)
-        matrix_inf_count = Sort(3, T)
-        matrix_inf_count_sum = Sort(2, T)
+        matrix_inf_count = Sort(2, T)
+        matrix_inf_count_sum = Sort(3, T)
 
         for method, matrix in [('original', matrix_original),
                              ('inf_count', matrix_inf_count),
                              ('inf_count_sum', matrix_inf_count_sum)]:
             
-            res_minimax = Plotnikov_Zverev(matrix, N, M)
-            res_square = Alg(matrix, N, M, 2)
-            res_cube = Alg(matrix, N, M, 3)
+            # Получаем только максимальные значения (вторые элементы кортежей)
+            res_minimax = Plotnikov_Zverev(matrix, N, M)[1]
+            res_square = Alg(matrix, N, M, 2)[1]
+            res_cube = Alg(matrix, N, M, 3)[1]
             
             results[method]['minimax'].append(res_minimax)
             results[method]['square'].append(res_square)
@@ -130,6 +146,7 @@ def main():
                 'square': res_square,
                 'cube': res_cube
             }
+            # Фильтруем только конечные значения
             valid_results = {k: v for k, v in valid_results.items() if not np.isinf(v)}
             
             if valid_results:
@@ -153,5 +170,4 @@ def main():
     print(f'Квадратичный: {np.mean(results["inf_count_sum"]["square"]):.2f} {wins["inf_count_sum"]["square"]}')
     print(f'Кубический: {np.mean(results["inf_count_sum"]["cube"]):.2f} {wins["inf_count_sum"]["cube"]}')
 
-if __name__ == "__main__":
-    main()
+main()
