@@ -63,6 +63,8 @@ all_rand_minimax, all_rand_square, all_rand_cube = [], [], []
 all_count_minimax, all_count_square, all_count_cube = [], [], []
 all_sum_minimax, all_sum_square, all_sum_cube = [], [], []
 
+all_rand_matrix, all_count_matrix, all_sum_matrix = [], [], [] #матрицы сортировок
+
 rand_win_minimax, rand_win_square, rand_win_cube = 0, 0, 0
 count_win_minimax, count_win_square, count_win_cube = 0, 0, 0
 sum_win_minimax, sum_win_square, sum_win_cube = 0, 0, 0
@@ -78,6 +80,7 @@ for i in range(num_matrix):
                 case 'Исходная':
                     match crit:
                         case 'Минимакс':
+                            all_rand_matrix.append(matrix_sort)
                             all_rand_minimax.append(makespan)
                         case 'Квадратичный':
                             all_rand_square.append(makespan)
@@ -86,6 +89,7 @@ for i in range(num_matrix):
                 case 'Кол-во бесконечностей':
                     match crit:
                         case 'Минимакс':
+                            all_count_matrix.append(matrix_sort)
                             all_count_minimax.append(makespan)
                         case 'Квадратичный':
                             all_count_square.append(makespan)
@@ -94,6 +98,7 @@ for i in range(num_matrix):
                 case 'Кол-во бесконечностей и сумма':
                     match crit:
                         case 'Минимакс':
+                            all_sum_matrix.append(matrix_sort)
                             all_sum_minimax.append(makespan)
                         case 'Квадратичный':
                             all_sum_square.append(makespan)
@@ -116,6 +121,10 @@ for i in range(num_matrix):
     min_res_val_rand = min(all_rand_minimax[i], all_rand_square[i], all_rand_cube[i])
     if min_res_val_rand == all_rand_minimax[i]:
         rand_win_minimax += 1
+        sums, makespan = PZ_algorithm(all_rand_matrix[i], 'Минимакс', 'Исходная')
+        sums2, makespan2 = PZ_algorithm(all_rand_matrix[i], 'Квадратичный', 'Исходная')
+        print(all_rand_matrix[i], sums, makespan)
+        print(all_rand_matrix[i], sums2, makespan2)
     elif min_res_val_rand == all_rand_square[i]:
         rand_win_square += 1
     elif min_res_val_rand == all_rand_cube[i]:
